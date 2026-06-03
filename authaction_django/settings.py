@@ -34,9 +34,14 @@ DATABASES = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+AUTHACTION = {
+    "DOMAIN": os.getenv("AUTHACTION_DOMAIN", ""),
+    "AUDIENCE": os.getenv("AUTHACTION_AUDIENCE", ""),
+}
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "api.authentication.JWTAuthentication",
+        "authaction.django.AuthActionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
