@@ -3,7 +3,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from api.authentication import JWTAuthentication
+from api.authentication import AuthActionAuthentication
 
 
 @api_view(["GET"])
@@ -14,7 +14,7 @@ def public_view(request: Request) -> Response:
 
 
 @api_view(["GET"])
-@authentication_classes([JWTAuthentication])
+@authentication_classes([AuthActionAuthentication])
 @permission_classes([IsAuthenticated])
 def protected_view(request: Request) -> Response:
     return Response({
