@@ -1,10 +1,10 @@
 # authaction-python-django-example
 
-A Python Django application demonstrating API authorization using [AuthAction](https://app.authaction.com/) with JWKS-based JWT validation.
+A Python Django application demonstrating API authorization using [AuthAction](https://app.authaction.com/) with the `authaction-python-sdk`.
 
 ## Overview
 
-This application shows how to configure and handle authorization using AuthAction's access tokens in a Django REST Framework API. It validates JSON Web Tokens (JWT) signed with RS256 by fetching public keys dynamically from AuthAction's JWKS endpoint.
+This application shows how to configure and handle authorization using AuthAction's access tokens in a Django REST Framework API. It validates JSON Web Tokens (JWT) by using the `authaction` SDK, which handles JWKS fetching and RS256 validation automatically.
 
 ## Prerequisites
 
@@ -102,7 +102,7 @@ authaction-python-django-example/
 │   ├── urls.py              # Root URL routing
 │   └── wsgi.py
 ├── api/
-│   ├── authentication.py    # JWKS fetching and JWT validation
+│   ├── authentication.py    # Re-exports AuthActionAuthentication from authaction-python-sdk
 │   ├── views.py             # public + protected views
 │   └── urls.py              # API URL routing
 ├── manage.py
@@ -113,37 +113,21 @@ authaction-python-django-example/
 
 ## Code Explanation
 
-### `api/authentication.py` — JWT Validation
+### `api/authentication.py` — Authentication Class
 
-Equivalent to `JwtStrategy` in the NestJS example.
-
-- **`_get_jwks()`** — Fetches and in-memory caches the public keys from
-  `https://{AUTHACTION_DOMAIN}/.well-known/jwks.json`. On a cache miss caused
-  by key rotation, it busts the cache and retries once.
-
-- **`_find_rsa_key(token)`** — Extracts the `kid` from the unverified token
-  header and finds the matching RSA key in the JWKS response.
-
-- **`verify_token(token)`** — Decodes and validates the JWT using:
-  - Algorithm: `RS256`
-  - Issuer: `https://{AUTHACTION_DOMAIN}`
-  - Audience: `{AUTHACTION_AUDIENCE}`
-
-- **`JWTAuthentication`** — A DRF `BaseAuthentication` subclass. It extracts the
-  `Bearer` token from the `Authorization` header, calls `verify_token`, and
-  returns an `AuthenticatedToken` object that DRF assigns to `request.user`.
+Re-exports `AuthActionAuthentication` and `AuthenticatedToken` from `authaction.django`. The SDK reads `AUTHACTION_DOMAIN` and `AUTHACTION_AUDIENCE` from the environment, fetches JWKS, and validates RS256 JWTs automatically.
 
 ### `api/views.py` — Views
 
 - **`GET /public`** — Uses `@permission_classes([AllowAny])`, accessible without
   authentication.
 - **`GET /protected`** — Uses `@permission_classes([IsAuthenticated])` with
-  `@authentication_classes([JWTAuthentication])`. Returns 401 if no valid token
-  is provided.
+  `@authentication_classes([AuthActionAuthentication])`. Returns 401 if no valid token
+  is provided. The verified subject is available via `request.user.sub`.
 
 ### `authaction_django/settings.py` — DRF Configuration
 
-`REST_FRAMEWORK` sets `JWTAuthentication` as the default authentication class
+`REST_FRAMEWORK` sets `AuthActionAuthentication` as the default authentication class
 and `IsAuthenticated` as the default permission class, so all views are protected
 by default unless explicitly overridden with `AllowAny`.
 
